@@ -4,9 +4,10 @@ Real-time Minecraft-themed chat app with username/password login and registratio
 
 ## What changed from your original version
 
-- **Fixed a broken path**: your old `server.js` served `../client`, a folder that
-  didn't exist alongside your uploaded files. Everything now lives correctly
-  under `public/`, and `server.js` serves from there.
+- **Fixed a broken path**: your old `server.js` served `../client`, a folder
+  that didn't exist alongside your uploaded files. All files now sit flat in
+  the project root (no subfolders) so they're easy to upload through GitHub's
+  web interface, which doesn't support drag-and-drop folder uploads.
 - **Added real accounts**: register/login with a username and password instead
   of just claiming a display name each session.
   - Passwords are hashed with Node's built-in `scrypt` (salted, never stored in
@@ -68,9 +69,16 @@ instead of `localhost`).
    ALLOWED_ORIGIN=https://itsnotmesae.github.io npm start
    ```
 
-3. **Push `public/` to GitHub Pages.** The client already points at
-   `http://localhost:3000` by default (see `API_BASE` near the top of
-   `app.js`). Change it there if your backend runs on a different port.
+3. **Push these files to GitHub Pages** (or your Pages branch/folder). The
+   client already points at `http://localhost:3000` by default (see
+   `API_BASE` near the top of `app.js`). Change it there if your backend runs
+   on a different port. Since everything is flat with no subfolders, you can
+   drag `index.html`, `app.js`, and `style.css` straight into GitHub's
+   "Add file → Upload files" screen — just make sure you don't also upload
+   `server.js`, `package.json`, `.gitignore`, or `README.md` to the *Pages*
+   publishing branch/folder if you're keeping frontend and backend in
+   separate places. If it's all one repo, that's fine — Pages will just ignore
+   the non-HTML/CSS/JS files when it builds the site.
 
 4. **Cross-origin cookies:** set `CROSS_ORIGIN=true` when starting the server
    so the session cookie is sent as `SameSite=None; Secure`, which is required
@@ -100,9 +108,16 @@ code changes needed.
 
 ## Notes on the account storage
 
-- `users.json` is created automatically on first registration. Don't commit it
-  to a public GitHub repo — add it to `.gitignore` (included) so you don't leak
-  password hashes.
+- `users.json` is created automatically on first registration, in the same
+  folder as `server.js` on whatever machine runs the backend. **Don't upload
+  it to GitHub** — it holds password hashes. It's listed in `.gitignore`, but
+  since everything is flat now, double check it's not sitting in your repo
+  before you push (it also isn't needed there — it gets created fresh wherever
+  `server.js` actually runs, e.g. your local machine).
+- The server also blocks direct HTTP access to `server.js`, `package.json`,
+  `.gitignore`, `README.md`, and `users.json` even though they're served from
+  the same folder as the frontend files — visiting `yoursite.com/server.js`
+  in a browser will return a 404 instead of the file contents.
 - Sessions live in memory, so restarting the server logs everyone out. That's
   fine for a hobby project; a persistent session store (e.g. Redis) would fix
   this if you need people to stay logged in across restarts.

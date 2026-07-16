@@ -169,7 +169,20 @@ function isValidPassword(password) {
 // ===========================
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+
+// Since static files are served from the project root (to make manual
+// GitHub uploads easier - no subfolders needed), explicitly block direct
+// HTTP access to server-side files that shouldn't be downloadable.
+const BLOCKED_FILES = ['server.js', 'package.json', 'package-lock.json', 'users.json', '.gitignore', 'README.md'];
+app.use((req, res, next) => {
+    const requestedFile = req.path.replace(/^\/+/, '');
+    if (BLOCKED_FILES.includes(requestedFile)) {
+        return res.status(404).send('Not found');
+    }
+    next();
+});
+
+app.use(express.static(__dirname));
 
 function getSessionFromReq(req) {
     const cookies = cookie.parse(req.headers.cookie || '');
